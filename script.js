@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
-const database = firebase.database();
+const db = firebase.database();
 
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // Attempt to set the map view to the user's location and add a pin at their location
   setMapViewToUserLocationAndAddPin(map);
 
+  // Load pins from the database
   loadPinsFromDatabase(map);
 });
 
 function setMapViewToFaithlegg(map) {
-  const faithleggCoords = [52.260465, -7.010256]; // Updated Latitude and longitude of Faithlegg, Co. Waterford, Ireland
-  map.setView(faithleggCoords, 14); // 14 is the updated initial zoom level
-  loadPinsFromDatabase(map);
+  const faithleggCoords = [52.260465, -7.010256];
+  map.setView(faithleggCoords, 14);
 }
 
 function setMapViewToUserLocationAndAddPin(map) {
@@ -41,7 +41,7 @@ function setMapViewToUserLocationAndAddPin(map) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLocation = [position.coords.latitude, position.coords.longitude];
-        map.setView(userLocation, 14); // 14 is the updated initial zoom level
+        map.setView(userLocation, 14);
         enableManualPinDrop(map);
       },
       (error) => {
@@ -55,56 +55,55 @@ function setMapViewToUserLocationAndAddPin(map) {
   }
 }
 
-function addPin(map, location) {
+function addPin(map, location, comment = '') {
   const marker = L.marker(location).addTo(map);
   marker.on('click', function () {
     if (confirm('Do you want to delete this pin?')) {
       map.removeLayer(marker);
-      removePinFromDatabase(marker._leaflet_id);
+      deletePinFromDatabase(marker);
     }
   });
 
-  const comment = prompt('Please enter a comment for this pin:');
   if (comment) {
     marker.bindPopup(comment);
-    savePinToDatabase(marker._leaflet_id, location, comment);
   }
+
+  return marker;
 }
 
 function enableManualPinDrop(map) {
   map.on('click', function (e) {
-    addPin(map, e.latlng);
+    const comment = prompt('Please enter a comment for this pin:');
+    if (comment) {
+      const marker = addPin(map, e.latlng, comment);
+      savePinToDatabase(marker, comment);
+    }
   });
 }
 
-function savePinToDatabase(id, location, comment) {
-  database.ref('pins/' + id).set({
-    lat: location.lat,
-    lng: location.lng,
-    comment: comment
-  });
+function savePinToDatabase(marker, comment) {
+  const { lat, lng } = marker.getLatLng();
+  const newPinRef = db.ref('pins').push();
+  newPinRef.set({ lat, lng, comment });
+  marker.pinKey = newPinRef.key; // Store the key on the marker for future reference
+}
+
+function deletePinFromDatabase(marker) {
+  if (marker.pinKey) {
+    db.ref('pins/' + marker.pinKey).remove();
+  }
 }
 
 function loadPinsFromDatabase(map) {
-  const pinsRef = database.ref('pins');
-  pinsRef.once('value', (snapshot) => {
-    snapshot.forEach((childSnapshot) => {
-      const pinData = childSnapshot.val();
-      const location = [pinData.lat, pinData.lng];
-      const marker = L.marker(location).addTo(map);
-      marker._leaflet_id = childSnapshot.key;
-      marker.bindPopup(pinData.comment);
-
-      marker.on('click', function () {
-        if (confirm('Do you want to delete this pin?')) {
-          map.removeLayer(marker);
-          removePinFromDatabase(marker._leaflet_id);
-        }
-      });
-    });
+  db.ref('pins').on('value', function (snapshot) {
+    const data = snapshot.val();
+    if (data) {
+      for (const pinKey in data) {
+        const pinData = data[pinKey];
+        const latLng = L.latLng(pinData.lat, pinData.lng);
+        const marker = addPin(map, latLng, pinData.comment);
+        marker.pinKey = pinKey; // Store the key on the marker for future reference
+      }
+    }
   });
-}
-
-function removePinFromDatabase(id) {
-  database.ref('pins/' + id).remove();
 }
