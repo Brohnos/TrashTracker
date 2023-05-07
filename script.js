@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256]; // Updated Latitude and longitude of Faithlegg, Co. Waterford, Ireland
   map.setView(faithleggCoords, 14); // 14 is the updated initial zoom level
+  loadPinsFromDatabase(map);
 }
 
 function setMapViewToUserLocationAndAddPin(map) {
