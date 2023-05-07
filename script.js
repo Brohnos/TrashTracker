@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.analytics();
 
-// ... Rest of your script.js code ...
+const database = firebase.database();
 
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Attempt to set the map view to the user's location and add a pin at their location
   setMapViewToUserLocationAndAddPin(map);
+
+  loadPinsFromDatabase(map);
 });
 
 function setMapViewToFaithlegg(map) {
@@ -57,12 +59,14 @@ function addPin(map, location) {
   marker.on('click', function () {
     if (confirm('Do you want to delete this pin?')) {
       map.removeLayer(marker);
+      removePinFromDatabase(marker._leaflet_id);
     }
   });
 
   const comment = prompt('Please enter a comment for this pin:');
   if (comment) {
     marker.bindPopup(comment);
+    savePinToDatabase(marker._leaflet_id, location, comment);
   }
 }
 
@@ -70,4 +74,36 @@ function enableManualPinDrop(map) {
   map.on('click', function (e) {
     addPin(map, e.latlng);
   });
+}
+
+function savePinToDatabase(id, location, comment) {
+  database.ref('pins/' + id).set({
+    lat: location.lat,
+    lng: location.lng,
+    comment: comment
+  });
+}
+
+function loadPinsFromDatabase(map) {
+  const pinsRef = database.ref('pins');
+  pinsRef.once('value', (snapshot) => {
+    snapshot.forEach((childSnapshot) => {
+      const pinData = childSnapshot.val();
+      const location = [pinData.lat, pinData.lng];
+      const marker = L.marker(location).addTo(map);
+      marker._leaflet_id = childSnapshot.key;
+      marker.bindPopup(pinData.comment);
+
+      marker.on('click', function () {
+        if (confirm('Do you want to delete this pin?')) {
+          map.removeLayer(marker);
+          removePinFromDatabase(marker._leaflet_id);
+        }
+      });
+    });
+  });
+}
+
+function removePinFromDatabase(id) {
+  database.ref('pins/' + id).remove();
 }
