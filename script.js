@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
   setMapViewToUserLocationAndAddPin(map);
   enableManualPinDrop(map);
 
-  database.ref('pins/').on('child_added', (snapshot) => {
+ database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
     console.log('Pins snapshot:', pinData);
     addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
