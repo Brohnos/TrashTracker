@@ -88,22 +88,20 @@ function addPin(map, location, comment, pinId) {
   const popup = L.popup().setContent(popupContent);
   marker.bindPopup(popup);
 
-  marker.on('click', function (e) {
-    e.originalEvent._stopped = true;
-    marker.openPopup();
-  });
-
   marker.on('popupopen', function () {
     const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.onclick = function() {
+    deleteBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       if (confirm('Do you want to delete this pin?')) {
         map.removeLayer(marker);
         if (marker.pinId) {
           database.ref('pins/' + marker.pinId).remove();
         }
       }
-    };
+    });
   });
 }
+
 
 
