@@ -42,4 +42,57 @@ function setMapViewToUserLocationAndAddPin(map) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLocation = [position.coords.latitude, position.coords.longitude];
-        map.setView(userLocation,
+        map.setView(userLocation, 14);
+      },
+      (error) => {
+        console.log('Error getting user location:', error);
+      }
+    );
+  } else {
+    console.log('Geolocation is not supported by this browser.');
+  }
+}
+
+function addPin(map, location, comment, pinId) {
+  const marker = L.marker(location).addTo(map);
+
+  if (pinId) {
+    marker.pinId = pinId;
+  }
+
+  const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
+  const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
+
+  const popup = L.popup().setContent(popupContent);
+  marker.bindPopup(popup);
+
+  marker.on('popupopen', function () {
+    const deleteBtn = document.querySelector('.delete-pin-btn');
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('Do you want to delete this pin?')) {
+        map.removeLayer(marker);
+        if (marker.pinId) {
+          database.ref('pins/' + marker.pinId).remove();
+        }
+      }
+    });
+  });
+}
+
+function enableManualPinDrop(map) {
+  map.on('click', function (e) {
+    const location = e.latlng;
+    const comment = prompt('Please enter a comment for this pin:');
+    if (comment) {
+      const pinData = {
+        latitude: location.lat,
+        longitude: location.lng,
+        comment: comment
+      };
+      const newPinRef = database.ref('pins/').push();
+      pinData.id = newPinRef.key;
+      newPinRef.set(pinData);
+      console.log('Pin data saved:', pinData);
+    }
+  });
+}
