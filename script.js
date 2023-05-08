@@ -53,6 +53,28 @@ function setMapViewToUserLocationAndAddPin(map) {
   }
 }
 
+function enableManualPinDrop(map) {
+  map.on('click', function (e) {
+    if (e.originalEvent._stopped) return;
+
+    const location = e.latlng;
+    const comment = prompt('Please enter a comment for this pin:');
+    if (comment) {
+      const pinData = {
+        latitude: location.lat,
+        longitude: location.lng,
+        comment: comment
+      };
+      const newPinRef = database.ref('pins/').push();
+      pinData.id = newPinRef.key;
+      newPinRef.set(pinData);
+      console.log('Pin data saved:', pinData);
+    }
+
+    e.originalEvent.stopPropagation();
+  });
+}
+
 function addPin(map, location, comment, pinId) {
   const marker = L.marker(location).addTo(map);
 
@@ -65,6 +87,11 @@ function addPin(map, location, comment, pinId) {
 
   const popup = L.popup().setContent(popupContent);
   marker.bindPopup(popup);
+
+  marker.on('click', function (e) {
+    e.originalEvent._stopped = true;
+    marker.openPopup();
+  });
 
   marker.on('popupopen', function () {
     const deleteBtn = document.querySelector('.delete-pin-btn');
@@ -79,22 +106,4 @@ function addPin(map, location, comment, pinId) {
   });
 }
 
-function enableManualPinDrop(map) {
-  console.log('enableManualPinDrop called'); // Added this line
-  map.on('click', function (e) {
-    const location = e.latlng;
-    const comment = prompt('Please enter a comment for this pin:');
-    if (comment) {
-      const pinData = {
-        latitude: location.lat,
-        longitude: location.lng,
-        comment: comment
-      };
-      const newPinRef = database.ref('pins/').push();
-      pinData.id = newPinRef.key;
-      newPinRef.set(pinData);
-      console.log('Pin data saved:', pinData);
-    }
-  });
-}
 
