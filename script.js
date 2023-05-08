@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
+    console.log('Pins snapshot:', pinData);
     addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
   });
 });
@@ -86,6 +87,7 @@ function enableManualPinDrop(map) {
       const newPinRef = database.ref('pins/').push();
       pinData.id = newPinRef.key;
       newPinRef.set(pinData);
+      console.log('Pin data saved:', pinData);
     }
   });
 }
