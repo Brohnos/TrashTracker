@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+database.ref('pins/').on('child_removed', (snapshot) => {
+  const pinIdToRemove = snapshot.key;
+  map.eachLayer((layer) => {
+    if (layer instanceof L.Marker && layer.pinId === pinIdToRemove) {
+      map.removeLayer(layer);
+    }
+  });
+});
+
+
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256];
   map.setView(faithleggCoords, 14);
@@ -89,19 +99,19 @@ function addPin(map, location, comment, pinId) {
   marker.bindPopup(popup);
 
   marker.on('popupopen', function () {
-    const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (confirm('Do you want to delete this pin?')) {
-        map.removeLayer(marker);
-        if (marker.pinId) {
-          database.ref('pins/' + marker.pinId).remove();
-        }
+  const deleteBtn = document.querySelector('.delete-pin-btn');
+  deleteBtn.addEventListener('mouseup', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm('Do you want to delete this pin?')) {
+      map.removeLayer(marker);
+      if (marker.pinId) {
+        database.ref('pins/' + marker.pinId).remove();
       }
-    });
+    }
   });
-}
+});
+
 
 
 
