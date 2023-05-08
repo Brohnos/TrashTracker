@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+database.ref('pins/').on('child_removed', (snapshot) => {
+  const pinIdToRemove = snapshot.key;
+  map.eachLayer((layer) => {
+    if (layer instanceof L.Marker && layer.pinId === pinIdToRemove) {
+      map.removeLayer(layer);
+    }
+  });
+});
+
+
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256];
   map.setView(faithleggCoords, 14);
