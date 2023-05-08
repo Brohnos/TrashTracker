@@ -16,6 +16,7 @@ const database = firebase.database();
 
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
+  var markers = [];
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -33,12 +34,14 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 database.ref('pins/').on('child_removed', (snapshot) => {
-  const pinIdToRemove = snapshot.key;
-  map.eachLayer((layer) => {
-    if (layer instanceof L.Marker && layer.pinId === pinIdToRemove) {
-      map.removeLayer(layer);
-    }
-  });
+  const pinData = snapshot.val();
+  console.log('Pin deleted:', pinData);
+
+  const pinToDelete = markers.find(marker => marker.pinId === pinData.id);
+  if (pinToDelete) {
+    map.removeLayer(pinToDelete);
+    markers = markers.filter(marker => marker !== pinToDelete);
+  }
 });
 
 
@@ -69,6 +72,8 @@ function addPin(map, location, comment, pinId) {
   if (pinId) {
     marker.pinId = pinId;
   }
+
+  markers.push(marker);
 
   const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
   const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
