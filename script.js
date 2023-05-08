@@ -21,14 +21,35 @@ document.addEventListener('DOMContentLoaded', function () {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
 
+  // Add the getLayersByProperty function to the Leaflet map object
+  L.Map.prototype.getLayersByProperty = function (property, value) {
+    let layersFound = [];
+    this.eachLayer(function (layer) {
+      if (layer.options && layer.options[property] && layer.options[property] === value) {
+        layersFound.push(layer);
+      }
+    });
+    return layersFound;
+  };
+
   setMapViewToFaithlegg(map);
   setMapViewToUserLocationAndAddPin(map);
   enableManualPinDrop(map);
 
+  // Listening to child_added event
   database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
     console.log('Pins snapshot:', pinData);
     addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
+  });
+
+  // Listening to child_removed event
+  database.ref('pins/').on('child_removed', (snapshot) => {
+    const pinId = snapshot.key;
+    const markers = map.getLayersByProperty('pinId', pinId);
+    if (markers.length > 0) {
+      map.removeLayer(markers[0]);
+    }
   });
 });
 
