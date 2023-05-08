@@ -16,7 +16,6 @@ const database = firebase.database();
 
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
-  var markers = [];
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -32,18 +31,6 @@ document.addEventListener('DOMContentLoaded', function () {
     addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
   });
 });
-
-database.ref('pins/').on('child_removed', (snapshot) => {
-  const pinData = snapshot.val();
-  console.log('Pin deleted:', pinData);
-
-  const pinToDelete = markers.find(marker => marker.pinId === pinData.id);
-  if (pinToDelete) {
-    map.removeLayer(pinToDelete);
-    markers = markers.filter(marker => marker !== pinToDelete);
-  }
-});
-
 
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256];
@@ -70,12 +57,10 @@ function addPin(map, location, comment, pinId) {
   const marker = L.marker(location).addTo(map);
 
   if (pinId) {
-    marker.pinId = pinId;
+    marker.options.firebaseKey = pinId;
   }
 
-  markers.push(marker);
-
-  const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
+  const deleteButton = `<button class="delete-pin-btn" data-firebase-key="${pinId}">Delete Pin</button>`;
   const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
 
   const popup = L.popup().setContent(popupContent);
@@ -85,9 +70,10 @@ function addPin(map, location, comment, pinId) {
     const deleteBtn = document.querySelector('.delete-pin-btn');
     deleteBtn.addEventListener('click', () => {
       if (confirm('Do you want to delete this pin?')) {
+        const firebaseKey = deleteBtn.getAttribute('data-firebase-key');
         map.removeLayer(marker);
-        if (marker.pinId) {
-          database.ref('pins/' + marker.pinId).remove();
+        if (firebaseKey) {
+          database.ref('pins/' + firebaseKey).remove();
         }
       }
     });
