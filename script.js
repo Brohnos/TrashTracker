@@ -80,7 +80,7 @@ function addPin(map, location, comment, pinId) {
 }
 
 function enableManualPinDrop(map) {
-  console.log('enableManualPinDrop called');
+  console.log('enableManualPinDrop called'); // Added this line
   map.on('click', function (e) {
     const location = e.latlng;
     const comment = prompt('Please enter a comment for this pin:');
