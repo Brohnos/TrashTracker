@@ -1,5 +1,12 @@
 const firebaseConfig = {
-  // ... (Your Firebase Config)
+  apiKey: "AIzaSyCOEpz-LCmMsvoDOkH6CdqUsAfh42DTmug",
+  authDomain: "tidy-towns-litter-tracker.firebaseapp.com",
+  databaseURL: "https://tidy-towns-litter-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tidy-towns-litter-tracker",
+  storageBucket: "tidy-towns-litter-tracker.appspot.com",
+  messagingSenderId: "532639980959",
+  appId: "1:532639980959:web:a62234e579947ce5a831aa",
+  measurementId: "G-SZZW59VS4Q"
 };
 
 firebase.initializeApp(firebaseConfig);
