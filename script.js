@@ -28,9 +28,32 @@ document.addEventListener('DOMContentLoaded', function () {
   database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
     console.log('Pins snapshot:', pinData);
-    addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
+    function addPin(map, location, comment, pinId) {
+  const marker = L.marker(location).addTo(map);
+
+  if (pinId) {
+    marker.pinId = pinId;
+  }
+
+  const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
+  const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
+
+  const popup = L.popup().setContent(popupContent);
+  marker.bindPopup(popup);
+
+  marker.on('popupopen', function () {
+    const deleteBtn = document.querySelector('.delete-pin-btn');
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('Do you want to delete this pin?')) {
+        map.removeLayer(marker);
+        if (marker.pinId) {
+          database.ref('pins/' + marker.pinId).remove();
+        }
+      }
+    });
   });
-});
+}
+
 
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256];
