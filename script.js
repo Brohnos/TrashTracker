@@ -14,6 +14,8 @@ const analytics = firebase.analytics();
 
 const database = firebase.database();
 
+var markers = {};
+
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
 
@@ -21,34 +23,23 @@ document.addEventListener('DOMContentLoaded', function () {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
 
-  // Add the getLayersByProperty function to the Leaflet map object
-  L.Map.prototype.getLayersByProperty = function (property, value) {
-    let layersFound = [];
-    this.eachLayer(function (layer) {
-      if (layer.options && layer.options[property] && layer.options[property] === value) {
-        layersFound.push(layer);
-      }
-    });
-    return layersFound;
-  };
-
   setMapViewToFaithlegg(map);
   setMapViewToUserLocationAndAddPin(map);
   enableManualPinDrop(map);
 
-  // Listening to child_added event
   database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
     console.log('Pins snapshot:', pinData);
-    addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
+    const marker = addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
+    markers[pinData.id] = marker;
   });
 
-  // Listening to child_removed event
   database.ref('pins/').on('child_removed', (snapshot) => {
     const pinId = snapshot.key;
-    const markers = map.getLayersByProperty('pinId', pinId);
-    if (markers.length > 0) {
-      map.removeLayer(markers[0]);
+    const marker = markers[pinId];
+    if (marker) {
+      map.removeLayer(marker);
+      delete markers[pinId];
     }
   });
 });
@@ -75,7 +66,7 @@ function setMapViewToUserLocationAndAddPin(map) {
 }
 
 function addPin(map, location, comment, pinId) {
-  const marker = L.marker(location).addTo(map);
+  const marker = L.marker(location, { pinId: pinId }).addTo(map);
 
   if (pinId) {
     marker.options.firebaseKey = pinId;
@@ -95,6 +86,7 @@ function addPin(map, location, comment, pinId) {
         map.removeLayer(marker);
         if (firebaseKey) {
           database.ref('pins/' + firebaseKey).remove();
+          return marker;
         }
       }
     });
