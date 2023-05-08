@@ -1,12 +1,5 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyCOEpz-LCmMsvoDOkH6CdqUsAfh42DTmug",
-  authDomain: "tidy-towns-litter-tracker.firebaseapp.com",
-  databaseURL: "https://tidy-towns-litter-tracker-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "tidy-towns-litter-tracker",
-  storageBucket: "tidy-towns-litter-tracker.appspot.com",
-  messagingSenderId: "532639980959",
-  appId: "1:532639980959:web:a62234e579947ce5a831aa",
-  measurementId: "G-SZZW59VS4Q"
+  // ... (Your Firebase Config)
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -28,32 +21,9 @@ document.addEventListener('DOMContentLoaded', function () {
   database.ref('pins/').on('child_added', (snapshot) => {
     const pinData = snapshot.val();
     console.log('Pins snapshot:', pinData);
-    function addPin(map, location, comment, pinId) {
-  const marker = L.marker(location).addTo(map);
-
-  if (pinId) {
-    marker.pinId = pinId;
-  }
-
-  const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
-  const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
-
-  const popup = L.popup().setContent(popupContent);
-  marker.bindPopup(popup);
-
-  marker.on('popupopen', function () {
-    const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.addEventListener('click', () => {
-      if (confirm('Do you want to delete this pin?')) {
-        map.removeLayer(marker);
-        if (marker.pinId) {
-          database.ref('pins/' + marker.pinId).remove();
-        }
-      }
-    });
+    addPin(map, [pinData.latitude, pinData.longitude], pinData.comment, pinData.id);
   });
-}
-
+});
 
 function setMapViewToFaithlegg(map) {
   const faithleggCoords = [52.260465, -7.010256];
@@ -79,21 +49,26 @@ function setMapViewToUserLocationAndAddPin(map) {
 function addPin(map, location, comment, pinId) {
   const marker = L.marker(location).addTo(map);
 
-  if (comment) {
-    marker.bindPopup(comment);
-  }
-
   if (pinId) {
     marker.pinId = pinId;
   }
 
-  marker.on('click', function () {
-    if (confirm('Do you want to delete this pin?')) {
-      map.removeLayer(marker);
-      if (marker.pinId) {
-        database.ref('pins/' + marker.pinId).remove();
+  const deleteButton = `<button class="delete-pin-btn">Delete Pin</button>`;
+  const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
+
+  const popup = L.popup().setContent(popupContent);
+  marker.bindPopup(popup);
+
+  marker.on('popupopen', function () {
+    const deleteBtn = document.querySelector('.delete-pin-btn');
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('Do you want to delete this pin?')) {
+        map.removeLayer(marker);
+        if (marker.pinId) {
+          database.ref('pins/' + marker.pinId).remove();
+        }
       }
-    }
+    });
   });
 }
 
