@@ -95,14 +95,14 @@ function addPin(map, location, comment, pinId) {
 
   marker.on('popupopen', function () {
     const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.addEventListener('click', () => {
+    deleteBtn.onclick = function() {
       if (confirm('Do you want to delete this pin?')) {
         map.removeLayer(marker);
         if (marker.pinId) {
           database.ref('pins/' + marker.pinId).remove();
         }
       }
-    });
+    };
   });
 }
 
