@@ -72,28 +72,33 @@ function addPin(map, location, comment, pinId) {
     marker.options.firebaseKey = pinId;
   }
 
-  const deleteButton = `<button class="delete-pin-btn" data-firebase-key="${pinId}">Delete Pin</button>`;
-  const popupContent = comment ? `<p>${comment}</p>${deleteButton}` : deleteButton;
+  const deleteButton = L.DomUtil.create('button', 'delete-pin-btn');
+  deleteButton.setAttribute('data-firebase-key', pinId);
+  deleteButton.innerHTML = 'Delete Pin';
+
+  deleteButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (confirm('Do you want to delete this pin?')) {
+      const firebaseKey = deleteButton.getAttribute('data-firebase-key');
+      map.removeLayer(marker);
+      if (firebaseKey) {
+        database.ref('pins/' + firebaseKey).remove();
+      }
+    }
+  });
+
+  const popupContent = L.DomUtil.create('div');
+  if (comment) {
+    const commentText = L.DomUtil.create('p');
+    commentText.innerHTML = comment;
+    popupContent.appendChild(commentText);
+  }
+  popupContent.appendChild(deleteButton);
 
   const popup = L.popup().setContent(popupContent);
   marker.bindPopup(popup);
-
-  marker.on('popupopen', function () {
-    const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.addEventListener('click', (event) => {
-  event.stopPropagation();
-  if (confirm('Do you want to delete this pin?')) {
-    const firebaseKey = deleteBtn.getAttribute('data-firebase-key');
-    map.removeLayer(marker);
-    if (firebaseKey) {
-      database.ref('pins/' + firebaseKey).remove();
-      return marker;
-    }
-  }
-});
-
-  });
 }
+
 
 function enableManualPinDrop(map) {
   let debounce = false;
