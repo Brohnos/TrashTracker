@@ -80,16 +80,18 @@ function addPin(map, location, comment, pinId) {
 
   marker.on('popupopen', function () {
     const deleteBtn = document.querySelector('.delete-pin-btn');
-    deleteBtn.addEventListener('click', () => {
-      if (confirm('Do you want to delete this pin?')) {
-        const firebaseKey = deleteBtn.getAttribute('data-firebase-key');
-        map.removeLayer(marker);
-        if (firebaseKey) {
-          database.ref('pins/' + firebaseKey).remove();
-          return marker;
-        }
-      }
-    });
+    deleteBtn.addEventListener('click', (event) => {
+  event.stopPropagation();
+  if (confirm('Do you want to delete this pin?')) {
+    const firebaseKey = deleteBtn.getAttribute('data-firebase-key');
+    map.removeLayer(marker);
+    if (firebaseKey) {
+      database.ref('pins/' + firebaseKey).remove();
+      return marker;
+    }
+  }
+});
+
   });
 }
 
