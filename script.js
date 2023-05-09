@@ -94,19 +94,26 @@ function addPin(map, location, comment, pinId) {
 }
 
 function enableManualPinDrop(map) {
+  let debounce = false;
   map.on('click', function (e) {
-    const location = e.latlng;
-    const comment = prompt('Please enter a comment for this pin:');
-    if (comment) {
-      const pinData = {
-        latitude: location.lat,
-        longitude: location.lng,
-        comment: comment
-      };
-      const newPinRef = database.ref('pins/').push();
-      pinData.id = newPinRef.key;
-      newPinRef.set(pinData);
-      console.log('Pin data saved:', pinData);
+    if (!debounce) {
+      debounce = true;
+      const location = e.latlng;
+      const comment = prompt('Please enter a comment for this pin:');
+      if (comment) {
+        const pinData = {
+          latitude: location.lat,
+          longitude: location.lng,
+          comment: comment
+        };
+        const newPinRef = database.ref('pins/').push();
+        pinData.id = newPinRef.key;
+        newPinRef.set(pinData);
+        console.log('Pin data saved:', pinData);
+      }
+      setTimeout(() => {
+        debounce = false;
+      }, 300);
     }
   });
 }
