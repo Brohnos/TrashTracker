@@ -18,6 +18,17 @@ var markers = {};
 
 document.addEventListener('DOMContentLoaded', function () {
   var map = L.map('map');
+  
+  database.ref('pins/').on('value', (snapshot) => {
+  const pinData = snapshot.val();
+  for (const pinId in pinData) {
+    if (!markers[pinId]) {
+      const pin = pinData[pinId];
+      const marker = addPin(map, [pin.latitude, pin.longitude], pin.comment, pin.id);
+      markers[pinId] = marker;
+    }
+  }
+});
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
